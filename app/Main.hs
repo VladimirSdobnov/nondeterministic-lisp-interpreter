@@ -1,4 +1,6 @@
 module Main where
 
+import AST
+
 main :: IO ()
-main = putStrLn "Hello, Haskell!"
+main = print (List [Symbol "+", Number 1, Number 2])
