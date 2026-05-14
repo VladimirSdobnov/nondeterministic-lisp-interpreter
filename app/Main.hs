@@ -1,6 +1,6 @@
 module Main where
 
-import AST
+import Parser
 
 main :: IO ()
-main = print (List [Symbol "+", Number 1, Number 2])
+main = print (tokenize "(+ (+ 1 2) (+ 32 4))")
