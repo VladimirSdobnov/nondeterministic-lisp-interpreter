@@ -88,4 +88,8 @@ main = do
         runProgram env8
             "(((lambda (x) (lambda (y) (+ x y))) 10) 5)"
 
+    _ <-
+        runProgram primitiveEnv
+            "(begin (define x 10) (define y 20) (+ x y))"
+
     return ()

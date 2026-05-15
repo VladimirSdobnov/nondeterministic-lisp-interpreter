@@ -37,6 +37,22 @@ bindParams (p:ps) (a:as) env =
 bindParams _ _ _ =
     error "Argument count mismatch"
 
+-- Последовательно вычисляет список выражений.
+evalBegin :: Env -> [Expr] -> (Value, Env)
+
+evalBegin _ [] =
+    error "begin expects at least one expression"
+
+evalBegin env [expr] =
+    eval env expr
+
+evalBegin env (expr:exprs) =
+    let
+        (_, newEnv) =
+            eval env expr
+    in
+        evalBegin newEnv exprs
+
 -- Вычисляет выражение
 -- в заданном окружении.
 eval :: Env -> Expr -> (Value, Env)
@@ -103,6 +119,9 @@ eval env
             map extractParam params
     in
         (Closure paramNames body env, env)
+
+eval env (List (Symbol "begin" : exprs)) =
+    evalBegin env exprs
 
 eval _ (List []) =
     error "Cannot evaluate empty list"
