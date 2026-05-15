@@ -1,32 +1,30 @@
 module Value where
 
-import AST
-
--- Значения, которые существуют во время выполнения программы.
+-- Runtime-значения интерпретатора.
 data Value
     = NumberV Integer
     | BooleanV Bool
     | SymbolV String
     | ListV [Value]
     | PrimitiveFunc ([Value] -> Value)
-    deriving (Show)
 
--- Преобразует runtime-значение обратно в строку.
-showValue :: Value -> String
-showValue (NumberV n) =
-    show n
+-- Пользовательское отображение runtime-значений.
+instance Show Value where
 
-showValue (BooleanV True) =
-    "#t"
+    show (NumberV n) =
+        show n
 
-showValue (BooleanV False) =
-    "#f"
+    show (BooleanV True) =
+        "#t"
 
-showValue (SymbolV s) =
-    s
+    show (BooleanV False) =
+        "#f"
 
-showValue (ListV values) =
-    "(" ++ unwords (map showValue values) ++ ")"
+    show (SymbolV s) =
+        s
 
-showValue (PrimitiveFunc _) =
-    "<primitive>"
+    show (ListV values) =
+        "(" ++ unwords (map show values) ++ ")"
+
+    show (PrimitiveFunc _) =
+        "<primitive>"
