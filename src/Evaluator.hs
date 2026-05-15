@@ -53,6 +53,22 @@ evalBegin env (expr:exprs) =
     in
         evalBegin newEnv exprs
 
+-- Преобразует синтаксическое выражение в runtime-значение
+-- без вычисления выражения.
+quoteExpr :: Expr -> Value
+
+quoteExpr (Number n) =
+    NumberV n
+
+quoteExpr (Boolean b) =
+    BooleanV b
+
+quoteExpr (Symbol s) =
+    SymbolV s
+
+quoteExpr (List exprs) =
+    ListV (map quoteExpr exprs)
+
 -- Вычисляет выражение
 -- в заданном окружении.
 eval :: Env -> Expr -> (Value, Env)
@@ -63,12 +79,14 @@ eval env (Number n) =
 eval env (Boolean b) =
     (BooleanV b, env)
 
-eval env (Symbol s) =
-    case lookupVar s env of
-        Just value ->
-            (value, env)
-        Nothing ->
-            error ("Unbound variable: " ++ s)
+
+eval env
+    (List
+        [
+            Symbol "quote",
+            expr
+        ]) =
+    (quoteExpr expr, env)
 
 eval env
     (List
@@ -141,6 +159,14 @@ eval env
 
 eval env (List (Symbol "begin" : exprs)) =
     evalBegin env exprs
+
+eval env (Symbol s) =
+    case lookupVar s env of
+        Just value ->
+            (value, env)
+        Nothing ->
+            error ("Unbound variable: " ++ s)
+
 
 eval _ (List []) =
     error "Cannot evaluate empty list"
