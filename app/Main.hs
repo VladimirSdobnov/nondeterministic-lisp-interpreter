@@ -1,47 +1,14 @@
 module Main where
 
-import Control.Exception
-import Parser
-
-runTest :: String -> IO ()
-runTest input = do
-
-    putStrLn "================================="
-    putStrLn ("Input: " ++ input)
-
-    result <- try (evaluateParser input)
-        :: IO (Either SomeException ())
-
-    case result of
-
-        Left ex -> do
-            putStrLn "Error:"
-            print ex
-
-        Right _ ->
-            putStrLn "Success"
-
--- Выполняет tokenize + parse
-evaluateParser :: String -> IO ()
-evaluateParser input = do
-
-    let tokens = tokenize input
-
-    putStrLn "Tokens:"
-    print tokens
-
-    putStrLn "AST:"
-    print (parse tokens)
+import Environment
+import Value
 
 main :: IO ()
 main = do
 
-    runTest "(+ 1 (* 2 3))"
+    let env1 =
+            defineVar "x" (NumberV 42) emptyEnv
 
-    runTest "(+ 1 (* 2 3))))"
+    print (lookupVar "x" env1)
 
-    runTest "(+ 1 (* 2 3)"
-
-    runTest ")"
-
-    runTest "#x"
+    print (lookupVar "y" env1)
