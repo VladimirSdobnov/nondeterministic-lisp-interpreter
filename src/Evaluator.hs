@@ -4,6 +4,17 @@ import AST
 import Environment
 import Value
 
+-- Проверяет, является ли значение истинным.
+--
+-- В Lisp только #f считается ложью.
+isTrue :: Value -> Bool
+
+isTrue (BooleanV False) =
+    False
+
+isTrue _ =
+    True
+
 -- Вычисляет выражение
 -- в заданном окружении.
 eval :: Env -> Expr -> (Value, Env)
@@ -26,11 +37,9 @@ eval env (Symbol s) =
         Nothing ->
             error ("Unbound variable: " ++ s)
 
--- Пока списки не реализованы
-eval _ (List []) =
-    error "Cannot evaluate empty list"
-
 -- Define
+--
+-- Создает новое связывание в окружении.
 eval env
     (List
         [
@@ -38,25 +47,65 @@ eval env
             Symbol name,
             valueExpr
         ]) =
+
     let
+
         (value, _) =
             eval env valueExpr
 
         newEnv =
             defineVar name value env
+
     in
+
         (value, newEnv)
+
+-- If
+--
+-- Вычисляет только одну из двух веток
+-- в зависимости от условия.
+eval env
+    (List
+        [
+            Symbol "if",
+            conditionExpr,
+            thenExpr,
+            elseExpr
+        ]) =
+
+    let
+
+        (conditionValue, env1) =
+            eval env conditionExpr
+
+    in
+
+        if isTrue conditionValue
+            then
+                eval env1 thenExpr
+
+            else
+                eval env1 elseExpr
+
+-- Пустой список нельзя вычислить
+eval _ (List []) =
+    error "Cannot evaluate empty list"
 
 -- Function application
 eval env (List (fnExpr : argExprs)) =
+
     let
+
         -- Вычисляем функцию
         (fn, _) =
             eval env fnExpr
+
         -- Вычисляем аргументы
         args =
             map (fst . eval env) argExprs
+
     in
+
         apply env fn args
 
 -- Применяет функцию к аргументам.
