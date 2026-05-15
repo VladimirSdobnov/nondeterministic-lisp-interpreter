@@ -61,7 +61,7 @@ executable interpreter
     main-is:          Main.hs
 
     -- Modules included in this executable, other than Main.
-    other-modules: AST, Parser, Value, Environment, Primitives
+    other-modules: AST, Parser, Value, Environment, Primitives, Evaluator
 
     -- LANGUAGE extensions used by modules in this package.
     -- other-extensions:

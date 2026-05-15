@@ -1,29 +1,35 @@
 module Main where
 
-import AST
-import Environment
 import Evaluator
+import Parser
 import Primitives
-import Value
+import Environment
+
+runProgram :: Env -> String -> IO Env
+runProgram env input = do
+
+    let tokens =
+            tokenize input
+
+    let expr =
+            parse tokens
+
+    let (result, newEnv) =
+            eval env expr
+
+    print result
+
+    return newEnv
 
 main :: IO ()
 main = do
 
-    putStrLn "================================="
-    putStrLn "Evaluator tests"
-    putStrLn "================================="
+    env1 <-
+        runProgram primitiveEnv
+            "(define x 10)"
 
-    -- Number
-    print
-        (eval primitiveEnv (Number 42))
+    _ <-
+        runProgram env1
+            "(+ x 5)"
 
-    -- Boolean
-    print
-        (eval primitiveEnv (Boolean True))
-
-    -- Variable lookup
-    let env =
-            defineVar "x" (NumberV 100) primitiveEnv
-
-    print
-        (eval env (Symbol "x"))
+    return ()
