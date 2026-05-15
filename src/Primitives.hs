@@ -14,20 +14,12 @@ unpackNumber _ =
     error "Expected number"
 
 -- Сложение.
---
--- Примеры:
--- (+ 1 2 3) -> 6
--- (+)       -> 0
 primitivePlus :: [Value] -> Value
 primitivePlus args =
     NumberV
         (sum (map unpackNumber args))
 
 -- Вычитание.
---
--- Примеры:
--- (- 10 3 2) -> 5
--- (- 5)      -> -5
 primitiveMinus :: [Value] -> Value
 
 primitiveMinus [] =
@@ -42,20 +34,12 @@ primitiveMinus (x:xs) =
         (unpackNumber x - sum (map unpackNumber xs))
 
 -- Умножение.
---
--- Примеры:
--- (* 2 3 4) -> 24
--- (*)       -> 1
 primitiveMultiply :: [Value] -> Value
 primitiveMultiply args =
     NumberV
         (product (map unpackNumber args))
 
 -- Целочисленное деление.
---
--- Примеры:
--- (/ 20 2 2) -> 5
--- (/ 5 2)    -> 2
 primitiveDivide :: [Value] -> Value
 
 primitiveDivide [] =
@@ -71,12 +55,6 @@ primitiveDivide (x:xs) =
             (map unpackNumber xs))
 
 -- Проверка чисел на равенство.
---
--- Примеры:
--- (= 5 5) -> #t
--- (= 5 3) -> #f
---
--- Функция принимает ровно 2 аргумента.
 primitiveEq :: [Value] -> Value
 
 primitiveEq [x, y] =
@@ -87,12 +65,6 @@ primitiveEq _ =
     error "= expects exactly 2 arguments"
 
 -- Проверка отношения "меньше".
---
--- Примеры:
--- (< 2 5) -> #t
--- (< 7 3) -> #f
---
--- Функция принимает ровно 2 аргумента.
 primitiveLess :: [Value] -> Value
 
 primitiveLess [x, y] =
@@ -103,12 +75,6 @@ primitiveLess _ =
     error "< expects exactly 2 arguments"
 
 -- Проверка отношения "больше".
---
--- Примеры:
--- (> 10 3) -> #t
--- (> 1 8)  -> #f
---
--- Функция принимает ровно 2 аргумента.
 primitiveGreater :: [Value] -> Value
 
 primitiveGreater [x, y] =
@@ -117,6 +83,56 @@ primitiveGreater [x, y] =
 
 primitiveGreater _ =
     error "> expects exactly 2 arguments"
+
+-- Создает список из переданных значений.
+primitiveList :: [Value] -> Value
+
+primitiveList = ListV
+
+-- Возвращает первый элемент списка.
+primitiveCar :: [Value] -> Value
+
+primitiveCar [ListV (x:_)] =
+    x
+
+primitiveCar [ListV []] =
+    error "car: empty list"
+
+primitiveCar _ =
+    error "car expects exactly 1 non-empty list"
+
+-- Возвращает хвост списка.
+primitiveCdr :: [Value] -> Value
+
+primitiveCdr [ListV (_:xs)] =
+    ListV xs
+
+primitiveCdr [ListV []] =
+    error "cdr: empty list"
+
+primitiveCdr _ =
+    error "cdr expects exactly 1 non-empty list"
+
+-- Добавляет элемент в начало списка.
+primitiveCons :: [Value] -> Value
+
+primitiveCons [value, ListV values] =
+    ListV (value : values)
+
+primitiveCons _ =
+    error "cons expects value and list"
+
+-- Проверяет список на пустоту.
+primitiveNull :: [Value] -> Value
+
+primitiveNull [ListV []] =
+    BooleanV True
+
+primitiveNull [ListV _] =
+    BooleanV False
+
+primitiveNull _ =
+    error "null? expects exactly 1 list"
 
 -- Начальное окружение интерпретатора
 -- со встроенными функциями.
@@ -137,4 +153,12 @@ primitiveEnv =
 
     defineVar "+" (PrimitiveFunc primitivePlus) $
 
-    emptyEnv
+    defineVar "list" (PrimitiveFunc primitiveList) $
+
+    defineVar  "car" (PrimitiveFunc primitiveCar) $
+
+    defineVar  "cdr" (PrimitiveFunc primitiveCdr) $
+
+    defineVar  "cons" (PrimitiveFunc primitiveCons) $
+
+    defineVar  "null?" (PrimitiveFunc primitiveNull) emptyEnv
