@@ -70,7 +70,28 @@ eval env (Symbol s) =
         Nothing ->
             error ("Unbound variable: " ++ s)
 
--- Define
+eval env
+    (List
+        [
+            Symbol "define",
+            Symbol name,
+            List
+                [
+                    Symbol "lambda",
+                    List params,
+                    body
+                ]
+        ]) =
+    let
+        paramNames =
+            map extractParam params
+        closure =
+            Closure paramNames body recursiveEnv
+        recursiveEnv =
+            defineVar name closure env
+    in
+        (closure, recursiveEnv)
+
 eval env
     (List
         [
@@ -86,7 +107,6 @@ eval env
     in
         (value, newEnv)
 
--- If
 eval env
     (List
         [
@@ -102,7 +122,6 @@ eval env
         if isTrue conditionValue
             then
                 eval env1 thenExpr
-
             else
                 eval env1 elseExpr
 
