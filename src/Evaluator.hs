@@ -1,7 +1,6 @@
 module Evaluator where
 
 import AST
-import Environment
 import Value
 
 -- Проверяет, является ли значение истинным.
@@ -15,31 +14,47 @@ isTrue (BooleanV False) =
 isTrue _ =
     True
 
+-- Извлекает имя параметра функции.
+extractParam :: Expr -> String
+
+extractParam (Symbol s) =
+    s
+
+extractParam _ =
+    error "Invalid parameter name"
+
+-- Связывает параметры функции
+-- с переданными аргументами.
+bindParams :: [String] -> [Value] -> Env -> Env
+
+bindParams [] [] env =
+    env
+
+bindParams (p:ps) (a:as) env =
+    bindParams ps as
+        (defineVar p a env)
+
+bindParams _ _ _ =
+    error "Argument count mismatch"
+
 -- Вычисляет выражение
 -- в заданном окружении.
 eval :: Env -> Expr -> (Value, Env)
 
--- Числа вычисляются в самих себя
 eval env (Number n) =
     (NumberV n, env)
 
--- Boolean вычисляются в самих себя
 eval env (Boolean b) =
     (BooleanV b, env)
 
--- Поиск символа в окружении
 eval env (Symbol s) =
     case lookupVar s env of
-
         Just value ->
             (value, env)
-
         Nothing ->
             error ("Unbound variable: " ++ s)
 
 -- Define
---
--- Создает новое связывание в окружении.
 eval env
     (List
         [
@@ -47,23 +62,15 @@ eval env
             Symbol name,
             valueExpr
         ]) =
-
     let
-
         (value, _) =
             eval env valueExpr
-
         newEnv =
             defineVar name value env
-
     in
-
         (value, newEnv)
 
 -- If
---
--- Вычисляет только одну из двух веток
--- в зависимости от условия.
 eval env
     (List
         [
@@ -72,14 +79,10 @@ eval env
             thenExpr,
             elseExpr
         ]) =
-
     let
-
         (conditionValue, env1) =
             eval env conditionExpr
-
     in
-
         if isTrue conditionValue
             then
                 eval env1 thenExpr
@@ -87,25 +90,31 @@ eval env
             else
                 eval env1 elseExpr
 
--- Пустой список нельзя вычислить
+-- Lambda
+eval env
+    (List
+        [
+            Symbol "lambda",
+            List params,
+            body
+        ]) =
+    let
+        paramNames =
+            map extractParam params
+    in
+        (Closure paramNames body env, env)
+
 eval _ (List []) =
     error "Cannot evaluate empty list"
 
 -- Function application
 eval env (List (fnExpr : argExprs)) =
-
     let
-
-        -- Вычисляем функцию
         (fn, _) =
             eval env fnExpr
-
-        -- Вычисляем аргументы
         args =
             map (fst . eval env) argExprs
-
     in
-
         apply env fn args
 
 -- Применяет функцию к аргументам.
@@ -113,6 +122,13 @@ apply :: Env -> Value -> [Value] -> (Value, Env)
 
 apply env (PrimitiveFunc fn) args =
     (fn args, env)
+
+apply _ (Closure params body closureEnv) args =
+    let
+        newEnv =
+            bindParams params args closureEnv
+    in
+        eval newEnv body
 
 apply _ _ _ =
     error "Expected function"

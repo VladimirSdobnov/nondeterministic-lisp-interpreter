@@ -1,6 +1,5 @@
 module Primitives where
 
-import Environment
 import Value
 
 -- Извлекает Integer из runtime-значения.
