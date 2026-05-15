@@ -69,6 +69,46 @@ quoteExpr (Symbol s) =
 quoteExpr (List exprs) =
     ListV (map quoteExpr exprs)
 
+-- Вычисляет логическое И с short-circuit evaluation.
+evalAnd :: Env -> [Expr] -> (Value, Env)
+
+-- Вычисляет логическое ИЛИ с short-circuit evaluation.
+evalOr :: Env -> [Expr] -> (Value, Env)
+
+evalOr env [] =
+    (BooleanV False, env)
+
+evalOr env [expr] =
+    eval env expr
+
+evalOr env (expr:exprs) =
+    let
+        (value, newEnv) =
+            eval env expr
+    in
+        if isTrue value
+            then
+                (value, newEnv)
+            else
+                evalOr newEnv exprs
+
+evalAnd env [] =
+    (BooleanV True, env)
+
+evalAnd env [expr] =
+    eval env expr
+
+evalAnd env (expr:exprs) =
+    let
+        (value, newEnv) =
+            eval env expr
+    in
+        if isTrue value
+            then
+                evalAnd newEnv exprs
+            else
+                (BooleanV False, newEnv)
+
 -- Вычисляет выражение
 -- в заданном окружении.
 eval :: Env -> Expr -> (Value, Env)
@@ -157,6 +197,13 @@ eval env
     in
         (Closure paramNames body env, env)
 
+
+eval env (List (Symbol "and" : exprs)) =
+    evalAnd env exprs
+
+eval env (List (Symbol "or" : exprs)) =
+    evalOr env exprs
+
 eval env (List (Symbol "begin" : exprs)) =
     evalBegin env exprs
 
@@ -166,7 +213,6 @@ eval env (Symbol s) =
             (value, env)
         Nothing ->
             error ("Unbound variable: " ++ s)
-
 
 eval _ (List []) =
     error "Cannot evaluate empty list"

@@ -30,60 +30,90 @@ runProgram env input = do
 main :: IO ()
 main = do
 
-    putStrLn "========== QUOTE TESTS =========="
+    putStrLn "========== NOT TESTS =========="
 
-    -- Обычный список данных
     _ <-
         runProgram primitiveEnv
-            "(quote (1 2 3 4 5))"
+            "(not #t)"
 
-    -- Код как данные
     _ <-
         runProgram primitiveEnv
-            "(quote (+ 1 2))"
+            "(not #f)"
 
-    -- Вложенные списки
     _ <-
         runProgram primitiveEnv
-            "(quote ((1 2) (3 4) (5 6)))"
+            "(not 42)"
 
-    -- Символы внутри quoted структуры
+    putStrLn "========== AND TESTS =========="
+
+    -- Все true
     _ <-
         runProgram primitiveEnv
-            "(quote (define x (+ 1 2)))"
+            "(and #t #t #t)"
 
-    -- Сравнение quote и list
+    -- Встречается false
+    _ <-
+        runProgram primitiveEnv
+            "(and #t #f #t)"
+
+    -- Short-circuit test
     --
-    -- Здесь (+ 1 2) вычисляется
+    -- Деление не должно вычисляться
     _ <-
         runProgram primitiveEnv
-            "(list (+ 1 2) (* 2 3))"
+            "(and #f (/ 1 0))"
 
-    -- А здесь НЕ вычисляется
+    -- Сложное логическое выражение
     _ <-
         runProgram primitiveEnv
-            "(quote ((+ 1 2) (* 2 3)))"
+            "(and (> 10 5) (< 2 3) (= 4 4))"
 
-    putStrLn "========== SYMBOLIC PROGRAM TEST =========="
+    putStrLn "========== OR TESTS =========="
 
-    -- Пример символической программы
+    -- Первый true
+    _ <-
+        runProgram primitiveEnv
+            "(or #t #f #f)"
+
+    -- Последний true
+    _ <-
+        runProgram primitiveEnv
+            "(or #f #f (> 10 5))"
+
+    -- Все false
+    _ <-
+        runProgram primitiveEnv
+            "(or #f #f #f)"
+
+    -- Short-circuit test
     --
-    -- Здесь мы фактически храним код как данные
+    -- Деление не должно вычисляться
+    _ <-
+        runProgram primitiveEnv
+            "(or #t (/ 1 0))"
+
+    putStrLn "========== COMPLEX BOOLEAN PROGRAM =========="
+
+    -- Более содержательный пример
+    --
+    -- Проверяем число по нескольким условиям
     _ <-
         runProgram primitiveEnv
             (concat
                 [
-                    "(quote ",
+                    "(begin ",
 
-                        "(begin ",
+                    "(define classify ",
+                        "(lambda (x) ",
+                            "(if (and (> x 0) (< x 10)) ",
+                                "100 ",
+                                "(if (or (= x 0) (= x 10)) ",
+                                    "200 ",
+                                    "300)))) ",
 
-                            "(define factorial ",
-                                "(lambda (n) ",
-                                    "(if (= n 0) ",
-                                        "1 ",
-                                        "(* n (factorial (- n 1)))))) ",
-
-                            "(factorial 5)))"
+                    "(+ (classify 5) ",
+                       "(classify 0) ",
+                       "(classify 20)))"
                 ])
 
     return ()

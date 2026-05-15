@@ -84,6 +84,18 @@ primitiveGreater [x, y] =
 primitiveGreater _ =
     error "> expects exactly 2 arguments"
 
+-- Логическое отрицание.
+primitiveNot :: [Value] -> Value
+
+primitiveNot [BooleanV False] =
+    BooleanV True
+
+primitiveNot [_] =
+    BooleanV False
+
+primitiveNot _ =
+    error "not expects exactly 1 argument"
+
 -- Создает список из переданных значений.
 primitiveList :: [Value] -> Value
 
@@ -161,4 +173,6 @@ primitiveEnv =
 
     defineVar  "cons" (PrimitiveFunc primitiveCons) $
 
-    defineVar  "null?" (PrimitiveFunc primitiveNull) emptyEnv
+    defineVar  "null?" (PrimitiveFunc primitiveNull) $
+    
+    defineVar "not" (PrimitiveFunc primitiveNot) emptyEnv
