@@ -2,76 +2,259 @@ module AmbEvaluator where
 
 import AST
 import Value
+import Prelude hiding (fail)
 
--- Continuation описывает,
--- что делать с результатом вычисления.
-type Continuation =
-    Value -> Env -> IO ()
+-- Success continuation.
+--
+-- Получает:
+-- 1. вычисленное значение
+-- 2. новое окружение
+-- 3. continuation для следующей альтернативы
+type SuccessCont =
+    Value -> Env -> FailureCont -> IO ()
+
+-- Failure continuation.
+--
+-- Вызывается,
+-- когда текущая ветка вычисления провалилась.
+type FailureCont =
+    IO ()
+
+-- Проверяет значение на истинность.
+isTrue :: Value -> Bool
+
+isTrue (BooleanV False) =
+    False
+
+isTrue _ =
+    True
+
+-- Извлекает имя параметра функции.
+extractParam :: Expr -> String
+
+extractParam (Symbol s) =
+    s
+
+extractParam _ =
+    error "Invalid parameter name"
+
+-- Связывает параметры функции
+-- с аргументами.
+bindParams :: [String] -> [Value] -> Env -> Env
+
+bindParams [] [] env =
+    env
+
+bindParams (p:ps) (a:as) env =
+    bindParams ps as
+        (defineVar p a env)
+
+bindParams _ _ _ =
+    error "Argument count mismatch"
 
 -- Вычисляет список аргументов слева направо.
-evalArgs
-    :: Env
+evalArgs :: Env
     -> [Expr]
-    -> ([Value] -> Env -> IO ())
+    -> ([Value] -> Env -> FailureCont -> IO ())
+    -> FailureCont
     -> IO ()
 
-evalArgs env [] cont =
-    cont [] env
+evalArgs env [] success fail =
+    success [] env fail
 
-evalArgs env (expr:exprs) cont =
-
+evalArgs env (expr:exprs) success fail =
     eval env expr
-        (\value newEnv ->
+        (\value newEnv fail1 ->
             evalArgs newEnv exprs
-                (\values finalEnv ->
-                    cont (value : values) finalEnv))
+                (\values finalEnv fail2 ->
+                    success
+                        (value : values)
+                        finalEnv
+                        fail2)
+                fail1)
+        fail
+
+-- Последовательно вычисляет список выражений.
+evalBegin :: Env
+    -> [Expr]
+    -> SuccessCont
+    -> FailureCont
+    -> IO ()
+
+evalBegin _ [] _ fail =
+    fail
+
+-- Последнее выражение
+evalBegin env [expr] success fail =
+    eval env expr success fail
+
+-- Промежуточные выражения
+evalBegin env (expr:exprs) success fail =
+    eval env expr
+        (\_ newEnv fail1 ->
+            evalBegin
+                newEnv
+                exprs
+                success
+                fail1)
+        fail
 
 -- CPS evaluator.
 --
 -- Вместо того чтобы вернуть результат,
 -- evaluator передает его в continuation.
-eval :: Env -> Expr -> Continuation -> IO ()
+eval :: Env
+    -> Expr
+    -> SuccessCont
+    -> FailureCont
+    -> IO ()
 
 -- Числа вычисляются в самих себя
-eval env (Number n) cont =
-    cont (NumberV n) env
+eval env (Number n) success fail =
+    success (NumberV n) env fail
 
 -- Boolean вычисляются в самих себя
-eval env (Boolean b) cont =
-    cont (BooleanV b) env
+eval env (Boolean b) success fail =
+    success (BooleanV b) env fail
 
 -- Поиск символа в окружении
-eval env (Symbol s) cont =
+eval env (Symbol s) success fail =
     case lookupVar s env of
-
         Just value ->
-            cont value env
-
+            success value env fail
         Nothing ->
             error ("Unbound variable: " ++ s)
 
 -- Пока списки в CPS evaluator не реализованы
-eval _ (List []) _ =
+eval _ (List []) _ _ =
     error "Cannot evaluate empty list"
 
+-- If
+eval env
+    (List
+        [
+            Symbol "if",
+            condition,
+            trueBranch,
+            falseBranch
+        ])
+    success
+    fail =
+    eval env condition
+        (\conditionValue env1 fail1 ->
+            if isTrue conditionValue
+                then
+                    eval env1 trueBranch success fail1
+                else
+                    eval env1 falseBranch success fail1)
+        fail
+
+-- Lambda
+eval env
+    (List
+        [
+            Symbol "lambda",
+            List params,
+            body
+        ])
+    success
+    fail =
+    let
+        paramNames =
+            map extractParam params
+        closure =
+            Closure paramNames body env
+    in
+        success closure env fail
+
+-- Define recursive function
+eval env
+    (List
+        [
+            Symbol "define",
+            Symbol name,
+
+            List
+                [
+                    Symbol "lambda",
+                    List params,
+                    body
+                ]
+        ])
+    success
+    fail =
+    let
+        paramNames =
+            map extractParam params
+        closure =
+            Closure paramNames body recursiveEnv
+        recursiveEnv =
+            defineVar name closure env
+    in
+        success closure recursiveEnv fail
+
+-- Define variable
+eval env
+    (List
+        [
+            Symbol "define",
+            Symbol name,
+            valueExpr
+        ])
+    success
+    fail =
+    eval env valueExpr
+        (\value env1 fail1 ->
+            let
+                newEnv =
+                    defineVar name value env1
+            in
+                success value newEnv fail1)
+        fail
+
+-- Begin
+eval env (List (Symbol "begin" : exprs)) success fail =
+    evalBegin env exprs success fail
+
 -- Function application
-eval env (List (fnExpr : argExprs)) cont =
+eval env (List (fnExpr : argExprs)) success fail =
     eval env fnExpr
-        (\fnValue env1 ->
+        (\fnValue env1 fail1 ->
             evalArgs env1 argExprs
-                (\argValues env2 ->
-                    apply fnValue argValues cont env2))
+                (\argValues env2 fail2 ->
+                    apply
+                        fnValue
+                        argValues
+                        success
+                        fail2
+                        env2)
+                fail1)
+        fail
 
 -- Применяет функцию к аргументам.
 apply
     :: Value
     -> [Value]
-    -> Continuation
+    -> SuccessCont
+    -> FailureCont
     -> Env
     -> IO ()
 
-apply (PrimitiveFunc fn) args cont env =
-    cont (fn args) env
+-- Primitive functions
+apply (PrimitiveFunc fn) args success fail env =
+    success (fn args) env fail
 
-apply _ _ _ _ =
+-- User-defined functions
+apply (Closure params body closureEnv)
+      args
+      success
+      fail
+      _ =
+    let
+        newEnv =
+            bindParams params args closureEnv
+    in
+        eval newEnv body success fail
+
+apply _ _ _ _ _ =
     error "Expected function"
