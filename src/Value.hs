@@ -53,3 +53,26 @@ instance Show Value where
 
     show (Closure {}) =
         "<closure>"
+
+instance Eq Value where
+
+    NumberV a == NumberV b =
+        a == b
+
+    BooleanV a == BooleanV b =
+        a == b
+
+    SymbolV a == SymbolV b =
+        a == b
+
+    ListV a == ListV b =
+        a == b
+
+    PrimitiveFunc _ == PrimitiveFunc _ =
+        False
+        
+    Closure {} == Closure {} =
+        False
+
+    _ == _ =
+        False

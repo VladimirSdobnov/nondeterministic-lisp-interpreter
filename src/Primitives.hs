@@ -54,15 +54,25 @@ primitiveDivide (x:xs) =
         (foldl div (unpackNumber x)
             (map unpackNumber xs))
 
--- Проверка чисел на равенство.
+primitiveAbs :: [Value] -> Value
+
+primitiveAbs [NumberV n] =
+    NumberV (abs n)
+
+primitiveAbs _ =
+    error "abs expects exactly 1 number"
+
+-- Проверка равенства значений.
 primitiveEq :: [Value] -> Value
 
-primitiveEq [x, y] =
-    BooleanV
-        (unpackNumber x == unpackNumber y)
+primitiveEq [] =
+    BooleanV True
 
-primitiveEq _ =
-    error "= expects exactly 2 arguments"
+primitiveEq [_] =
+    BooleanV True
+
+primitiveEq (x:xs) =
+    BooleanV (all (== x) xs)
 
 -- Проверка отношения "меньше".
 primitiveLess :: [Value] -> Value
@@ -146,6 +156,30 @@ primitiveNull [ListV _] =
 primitiveNull _ =
     error "null? expects exactly 1 list"
 
+-- Проверяет,
+-- что все элементы списка различны.
+allDistinct :: [Value] -> Bool
+
+allDistinct [] =
+    True
+
+allDistinct (x:xs) =
+    notElem x xs
+        && allDistinct xs
+
+-- Проверка уникальности элементов списка.
+--
+-- Примеры:
+-- (distinct? (list 1 2 3)) -> #t
+-- (distinct? (list 1 2 1)) -> #f
+primitiveDistinct :: [Value] -> Value
+
+primitiveDistinct [ListV values] =
+    BooleanV (allDistinct values)
+
+primitiveDistinct _ =
+    error "distinct? expects exactly 1 list"
+
 -- Начальное окружение интерпретатора
 -- со встроенными функциями.
 primitiveEnv :: Env
@@ -174,5 +208,9 @@ primitiveEnv =
     defineVar  "cons" (PrimitiveFunc primitiveCons) $
 
     defineVar  "null?" (PrimitiveFunc primitiveNull) $
-    
+
+    defineVar "abs" (PrimitiveFunc primitiveAbs) $
+
+    defineVar "distinct?" (PrimitiveFunc primitiveDistinct) $
+
     defineVar "not" (PrimitiveFunc primitiveNot) emptyEnv
