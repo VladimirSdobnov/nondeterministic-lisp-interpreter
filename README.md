@@ -354,6 +354,6 @@ Possible future extensions:
 
 ---
 
-# Author
+# Author: Vladimir Sdobvnov is a student at UNN
 
 Diploma project on nondeterministic computation models and Lisp interpreter architecture.
