@@ -99,6 +99,93 @@ evalBegin env (expr:exprs) success fail =
                 fail1)
         fail
 
+-- CPS evaluation для and.
+evalAnd :: Env
+    -> [Expr]
+    -> SuccessCont
+    -> FailureCont
+    -> IO ()
+
+-- Пустой and -> #t
+evalAnd env [] success fail =
+    success (BooleanV True) env fail
+
+-- Последнее выражение
+evalAnd env [expr] success fail =
+    eval env expr success fail
+
+-- Short-circuit logic
+evalAnd env (expr:exprs) success fail =
+    eval env expr
+        (\value env1 fail1 ->
+            if isTrue value
+                then
+                    evalAnd env1 exprs success fail1
+                else
+                    success (BooleanV False) env1 fail1)
+        fail
+
+-- CPS evaluation для or.
+evalOr :: Env
+    -> [Expr]
+    -> SuccessCont
+    -> FailureCont
+    -> IO ()
+
+-- Пустой or -> #f
+evalOr env [] success fail =
+    success (BooleanV False) env fail
+
+-- Последнее выражение
+evalOr env [expr] success fail =
+    eval env expr success fail
+
+-- Short-circuit logic
+evalOr env (expr:exprs) success fail =
+
+    eval env expr
+        (\value env1 fail1 ->
+            if isTrue value
+                then
+                    success value env1 fail1
+                else
+                    evalOr env1 exprs success fail1)
+        fail
+
+-- Вычисляет альтернативы amb.
+evalAmb :: Env
+    -> [Expr]
+    -> SuccessCont
+    -> FailureCont
+    -> IO ()
+
+evalAmb _ [] _ fail =
+    fail
+
+-- Пробуем первую альтернативу.
+-- Если она потом провалится,
+-- пробуем остальные альтернативы.
+evalAmb env (choice:choices) success fail =
+    eval env choice
+        success
+        (evalAmb env choices success fail)
+
+-- Преобразует Expr в Value
+-- без вычисления.
+quoteExpr :: Expr -> Value
+
+quoteExpr (Number n) =
+    NumberV n
+
+quoteExpr (Boolean b) =
+    BooleanV b
+
+quoteExpr (Symbol s) =
+    SymbolV s
+
+quoteExpr (List exprs) =
+    ListV (map quoteExpr exprs)
+
 -- CPS evaluator.
 --
 -- Вместо того чтобы вернуть результат,
@@ -128,6 +215,14 @@ eval env (Symbol s) success fail =
 -- Пока списки в CPS evaluator не реализованы
 eval _ (List []) _ _ =
     error "Cannot evaluate empty list"
+
+-- And
+eval env (List (Symbol "and" : exprs)) success fail =
+    evalAnd env exprs success fail
+
+-- Or
+eval env (List (Symbol "or" : exprs)) success fail =
+    evalOr env exprs success fail
 
 -- If
 eval env
@@ -212,6 +307,42 @@ eval env
                 success value newEnv fail1)
         fail
 
+-- Quote
+eval env
+    (List
+        [
+            Symbol "quote",
+            expr
+        ])
+    success
+    fail =
+    success
+        (quoteExpr expr)
+        env
+        fail
+
+-- Amb
+eval env (List (Symbol "amb" : choices)) success fail =
+    evalAmb env choices success fail
+
+-- Require
+eval env
+    (List
+        [
+            Symbol "require",
+            condition
+        ])
+    success
+    fail =
+    eval env condition
+        (\value env1 fail1 ->
+            if isTrue value
+                then
+                    success (BooleanV True) env1 fail1
+                else
+                    fail1)
+        fail
+
 -- Begin
 eval env (List (Symbol "begin" : exprs)) success fail =
     evalBegin env exprs success fail
@@ -232,8 +363,7 @@ eval env (List (fnExpr : argExprs)) success fail =
         fail
 
 -- Применяет функцию к аргументам.
-apply
-    :: Value
+apply :: Value
     -> [Value]
     -> SuccessCont
     -> FailureCont

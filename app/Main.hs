@@ -1,67 +1,22 @@
 module Main where
 
 import AmbEvaluator
-import AST
 import Parser
 import Primitives
 import Value
+import Prelude hiding (fail)
 
--- ============================================================
--- Continuations
--- ============================================================
-
--- Обычный continuation.
---
--- Просто печатает результат.
 printSuccess :: SuccessCont
-printSuccess value _ _ =
+printSuccess value _ fail = do
     putStrLn ("Result: " ++ show value)
+    fail
 
--- Failure continuation.
 printFailure :: FailureCont
 printFailure =
-    putStrLn "Computation failed"
+    putStrLn "No more results"
 
--- Continuation,
--- дополнительно преобразующий результат.
---
--- Демонстрирует,
--- что continuation может продолжать вычисления.
-doubleNumberCont :: SuccessCont
-doubleNumberCont (NumberV n) _ _ =
-    putStrLn ("Doubled result: " ++ show (n * 2))
-
-doubleNumberCont value _ _ =
-    putStrLn ("Expected number, got: " ++ show value)
-
--- Continuation,
--- выводящий тип результата.
-describeCont :: SuccessCont
-describeCont (NumberV n) _ _ =
-    putStrLn ("Number result: " ++ show n)
-
-describeCont (BooleanV b) _ _ =
-    putStrLn ("Boolean result: " ++ show b)
-
-describeCont (ListV values) _ _ =
-    putStrLn ("List result with "
-        ++ show (length values)
-        ++ " elements")
-
-describeCont value _ _ =
-    putStrLn ("Other result: " ++ show value)
-
--- ============================================================
--- Runner
--- ============================================================
-
-runProgram
-    :: String
-    -> SuccessCont
-    -> IO ()
-
-runProgram input success = do
-
+runProgram :: String -> IO ()
+runProgram input = do
     putStrLn "================================="
     putStrLn ("Program: " ++ input)
 
@@ -71,68 +26,13 @@ runProgram input success = do
     let expr =
             parse tokens
 
-    eval
-        primitiveEnv
-        expr
-        success
-        printFailure
-
-    putStrLn ""
-
--- ============================================================
--- Main
--- ============================================================
+    eval primitiveEnv expr printSuccess printFailure
 
 main :: IO ()
 main = do
 
-    putStrLn "========== STANDARD CONTINUATION =========="
+    runProgram "(amb 1 2 3)"
 
-    runProgram
-        "(+ 1 2)"
-        printSuccess
+    runProgram "(+ (amb 1 2 3) 10)"
 
-    runProgram
-        "(* 2 3 4)"
-        printSuccess
-
-    putStrLn "========== CUSTOM CONTINUATION =========="
-
-    runProgram
-        "(+ 10 20)"
-        doubleNumberCont
-
-    runProgram
-        "(* 5 5)"
-        doubleNumberCont
-
-    putStrLn "========== DESCRIBE CONTINUATION =========="
-
-    runProgram
-        "(list 1 2 3 4)"
-        describeCont
-
-    runProgram
-        "(> 10 5)"
-        describeCont
-
-    runProgram
-        "(+ 100 200)"
-        describeCont
-
-    putStrLn "========== RECURSIVE PROGRAM =========="
-
-    runProgram
-        (concat
-            [
-                "(begin ",
-
-                "(define fact ",
-                    "(lambda (n) ",
-                        "(if (= n 0) ",
-                            "1 ",
-                            "(* n (fact (- n 1)))))) ",
-
-                "(fact 6))"
-            ])
-        printSuccess
+    runProgram "(begin (define x (amb 1 2 3 4 5)) (define y (amb 10 20 30)) (require (> (+ x y) 22)) (list x y))"
