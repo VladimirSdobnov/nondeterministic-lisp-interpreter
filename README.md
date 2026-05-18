@@ -23,6 +23,42 @@ The interpreter was developed as part of a diploma project focused on nondetermi
 
 ---
 
+# Installation and Launch
+
+## Requirements
+
+Before running the project, install:
+
+- GHC
+- Cabal
+
+Check installation:
+
+```bash
+ghc --version
+cabal --version
+```
+
+## Clone Repository
+
+```bash
+git clone https://github.com/VladimirSdobnov/nondeterministic-lisp-interpreter.git
+cd <project-folder>
+```
+
+## Build Project
+
+```bash
+cabal update
+cabal build
+```
+
+## Run Interpreter
+
+```bash
+cabal run
+```
+
 # Architecture
 
 The project is divided into several logical modules.
