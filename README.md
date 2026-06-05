@@ -390,6 +390,7 @@ Possible future extensions:
 
 ---
 
+# Author : Sdobnov Vladimir
 # Author: Vladimir Sdobvnov is a student at UNN
 
 Diploma project on nondeterministic computation models and Lisp interpreter architecture.
