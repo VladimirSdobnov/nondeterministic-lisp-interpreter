@@ -354,6 +354,6 @@ Possible future extensions:
 
 ---
 
-# Author
+# Author : Sdobnov Vladimir
 
 Diploma project on nondeterministic computation models and Lisp interpreter architecture.
