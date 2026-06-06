@@ -67,13 +67,16 @@ executable interpreter
         Value, 
         Primitives,
         Evaluator,
-        AmbEvaluator
+        AmbEvaluator,
+        NondeterministicPrograms,
+        DeterministicPrograms
+
 
     -- LANGUAGE extensions used by modules in this package.
     -- other-extensions:
 
     -- Other library packages from which modules are imported.
-    build-depends:    containers ^>=0.6.7, base ^>=4.18.3.0
+    build-depends:    time ^>=1.12.2, containers ^>=0.6.7, base ^>=4.18.3.0
 
     -- Directories containing source files.
     hs-source-dirs:   app, src

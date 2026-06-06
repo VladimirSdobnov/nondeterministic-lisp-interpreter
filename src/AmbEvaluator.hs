@@ -3,6 +3,7 @@ module AmbEvaluator where
 import AST
 import Value
 import Prelude hiding (fail)
+import Data.IORef
 
 -- Success continuation.
 --
@@ -186,6 +187,30 @@ quoteExpr (Symbol s) =
 quoteExpr (List exprs) =
     ListV (map quoteExpr exprs)
 
+-- Вычисляет выражение и собирает все его решения.
+collectValues :: Env -> Expr -> IO [Value]
+collectValues env expr = do
+
+    resultsRef <-
+        newIORef []
+
+    let
+        success :: SuccessCont
+        success value _ nextFail = do
+            modifyIORef resultsRef (value :)
+            nextFail
+
+        failure :: FailureCont
+        failure =
+            return ()
+
+    eval env expr success failure
+
+    results <-
+        readIORef resultsRef
+
+    return (reverse results)
+
 -- CPS evaluator.
 --
 -- Вместо того чтобы вернуть результат,
@@ -342,6 +367,23 @@ eval env
                 else
                     fail1)
         fail
+
+-- All solutions
+--
+-- Возвращает список всех решений выражения.
+eval env
+    (List
+        [
+            Symbol "all-solutions",
+            expr
+        ])
+    success
+    fail = do
+
+    values <-
+        collectValues env expr
+
+    success (ListV values) env fail
 
 -- Begin
 eval env (List (Symbol "begin" : exprs)) success fail =
