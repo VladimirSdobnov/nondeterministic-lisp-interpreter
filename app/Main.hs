@@ -18,7 +18,7 @@ import Value
 
 numericIterations :: Int
 numericIterations =
-    1
+    10
 
 logicalIterations :: Int
 logicalIterations =
@@ -55,7 +55,7 @@ valueSize (ListV values) =
 valueSize (PrimitiveFunc _) =
     1
 
-valueSize (Closure _ _ _) =
+valueSize (Closure {}) =
     1
 
 -- ============================================================
