@@ -4,75 +4,95 @@ module DeterministicPrograms where
 -- Task 1: first solution
 -- ============================================================
 
-threeNumbersFirst :: String
-threeNumbersFirst =
-    concat
-        [
-            "(begin ",
+threeNumbersFirst :: Integer -> String
+threeNumbersFirst n =
+    let
+        target =
+            3 * n `div` 2
 
-            "(define search ",
-                "(lambda (x y z) ",
+        upper =
+            show n
 
-                    "(if (> x 11) ",
-                        "(quote fail) ",
+        targetValue =
+            show target
+    in
+        concat
+            [
+                "(begin ",
 
-                        "(if (> y 11) ",
-                            "(search (+ x 1) 0 0 ) ",
+                "(define search ",
+                    "(lambda (x y z) ",
 
-                            "(if (> z 11) ",
-                                "(search x (+ y 1) 0) ",
+                        "(if (> x ", upper, ") ",
+                            "(quote fail) ",
 
-                                "(if ",
-                                    "(and ",
-                                        "(distinct? (list x y z)) ",
-                                        "(= (+ x y z) 15) ",
-                                        "(< x y) ",
-                                        "(< y z)) ",
+                            "(if (> y ", upper, ") ",
+                                "(search (+ x 1) 1 1) ",
 
-                                    "(list x y z) ",
+                                "(if (> z ", upper, ") ",
+                                    "(search x (+ y 1) 1) ",
 
-                                    "(search x y (+ z 1)))))))) ",
+                                    "(if ",
+                                        "(and ",
+                                            "(distinct? (list x y z)) ",
+                                            "(= (+ x y z) ", targetValue, ") ",
+                                            "(< x y) ",
+                                            "(< y z)) ",
 
-            "(search 0 0 0))"
-        ]
+                                        "(list x y z) ",
+
+                                        "(search x y (+ z 1)))))))) ",
+
+                "(search 1 1 1))"
+            ]
 
 -- ============================================================
 -- Task 1: all solutions
 -- ============================================================
 
-threeNumbersAll :: String
-threeNumbersAll =
-    concat
-        [
-            "(begin ",
+threeNumbersAll :: Integer -> String
+threeNumbersAll n =
+    let
+        target =
+            3 * n `div` 2
 
-            "(define search ",
-                "(lambda (x y z results) ",
+        upper =
+            show n
 
-                    "(if (> x 11) ",
-                        "results ",
+        targetValue =
+            show target
+    in
+        concat
+            [
+                "(begin ",
 
-                        "(if (> y 11) ",
-                            "(search (+ x 1) 0 0 results) ",
+                "(define search ",
+                    "(lambda (x y z results) ",
 
-                            "(if (> z 11) ",
-                                "(search x (+ y 1) 0 results) ",
+                        "(if (> x ", upper, ") ",
+                            "results ",
 
-                                "(if ",
-                                    "(and ",
-                                        "(distinct? (list x y z)) ",
-                                        "(= (+ x y z) 15) ",
-                                        "(< x y) ",
-                                        "(< y z)) ",
+                            "(if (> y ", upper, ") ",
+                                "(search (+ x 1) 1 1 results) ",
 
-                                    "(search x y (+ z 1) ",
-                                        "(cons (list x y z) results)) ",
+                                "(if (> z ", upper, ") ",
+                                    "(search x (+ y 1) 1 results) ",
 
-                                    "(search x y (+ z 1) results))))))) ",
+                                    "(if ",
+                                        "(and ",
+                                            "(distinct? (list x y z)) ",
+                                            "(= (+ x y z) ", targetValue, ") ",
+                                            "(< x y) ",
+                                            "(< y z)) ",
 
-            "(search 0 0 0 (list)))"
-        ]
+                                        "(search x y (+ z 1) ",
+                                            "(cons (list x y z) results)) ",
 
+                                        "(search x y (+ z 1) results))))))) ",
+
+                "(search 1 1 1 (list)))"
+            ]
+            
 -- ============================================================
 -- Task 2: SICP Multiple Dwelling, first solution
 -- ============================================================

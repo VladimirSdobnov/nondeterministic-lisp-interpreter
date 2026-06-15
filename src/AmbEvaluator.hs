@@ -171,6 +171,31 @@ evalAmb env (choice:choices) success fail =
         success
         (evalAmb env choices success fail)
 
+-- Вычисляет альтернативы amb-range.
+--
+-- Последовательно выбирает числа из диапазона [current; end].
+evalAmbRange :: Env
+    -> Integer
+    -> Integer
+    -> SuccessCont
+    -> FailureCont
+    -> IO ()
+
+evalAmbRange env current end success fail =
+    if current > end
+        then
+            fail
+        else
+            success
+                (NumberV current)
+                env
+                (evalAmbRange
+                    env
+                    (current + 1)
+                    end
+                    success
+                    fail)
+
 -- Преобразует Expr в Value
 -- без вычисления.
 quoteExpr :: Expr -> Value
@@ -349,6 +374,35 @@ eval env
 -- Amb
 eval env (List (Symbol "amb" : choices)) success fail =
     evalAmb env choices success fail
+
+-- Amb range
+eval env
+    (List
+        [
+            Symbol "amb-range",
+            fromExpr,
+            toExpr
+        ])
+    success
+    fail =
+    eval env fromExpr
+        (\fromValue env1 fail1 ->
+            eval env1 toExpr
+                (\toValue env2 fail2 ->
+                    case (fromValue, toValue) of
+
+                        (NumberV from, NumberV to) ->
+                            evalAmbRange
+                                env2
+                                from
+                                to
+                                success
+                                fail2
+
+                        _ ->
+                            error "amb-range expects two numbers")
+                fail1)
+        fail
 
 -- Require
 eval env

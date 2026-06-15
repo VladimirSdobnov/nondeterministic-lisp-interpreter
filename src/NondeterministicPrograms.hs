@@ -4,46 +4,66 @@ module NondeterministicPrograms where
 -- Task 1: first solution
 -- ============================================================
 
-threeNumbersFirst :: String
-threeNumbersFirst =
-    concat
-        [
-            "(begin ",
+threeNumbersFirst :: Integer -> String
+threeNumbersFirst n =
+    let
+        target =
+            3 * n `div` 2
 
-            "(define x (amb 0 1 2 3 4 5 6 7 8 9 10 11)) ",
-            "(define y (amb 0 1 2 3 4 5 6 7 8 9 10 11)) ",
-            "(define z (amb 0 1 2 3 4 5 6 7 8 9 10 11)) ",
+        upper =
+            show n
 
-            "(require (distinct? (list x y z))) ",
-            "(require (= (+ x y z) 15)) ",
-            "(require (< x y)) ",
-            "(require (< y z)) ",
+        targetValue =
+            show target
+    in
+        concat
+            [
+                "(begin ",
 
-            "(list x y z))"
-        ]
+                "(define x (amb-range 1 ", upper, ")) ",
+                "(define y (amb-range 1 ", upper, ")) ",
+                "(define z (amb-range 1 ", upper, ")) ",
+
+                "(require (distinct? (list x y z))) ",
+                "(require (= (+ x y z) ", targetValue, ")) ",
+                "(require (< x y)) ",
+                "(require (< y z)) ",
+
+                "(list x y z))"
+            ]
 
 -- ============================================================
 -- Task 1: all solutions
 -- ============================================================
 
-threeNumbersAll :: String
-threeNumbersAll =
-    concat
-        [
-            "(all-solutions ",
-                "(begin ",
+threeNumbersAll :: Integer -> String
+threeNumbersAll n =
+    let
+        target =
+            3 * n `div` 2
 
-                "(define x (amb 0 1 2 3 4 5 6 7 8 9 10 11)) ",
-                "(define y (amb 0 1 2 3 4 5 6 7 8 9 10 11)) ",
-                "(define z (amb 0 1 2 3 4 5 6 7 8 9 10 11)) ",
+        upper =
+            show n
 
-                "(require (distinct? (list x y z))) ",
-                "(require (= (+ x y z) 15)) ",
-                "(require (< x y)) ",
-                "(require (< y z)) ",
+        targetValue =
+            show target
+    in
+        concat
+            [
+                "(all-solutions ",
+                    "(begin ",
 
-                "(list x y z)))"
-        ]
+                    "(define x (amb-range 1 ", upper, ")) ",
+                    "(define y (amb-range 1 ", upper, ")) ",
+                    "(define z (amb-range 1 ", upper, ")) ",
+
+                    "(require (distinct? (list x y z))) ",
+                    "(require (= (+ x y z) ", targetValue, ")) ",
+                    "(require (< x y)) ",
+                    "(require (< y z)) ",
+
+                    "(list x y z)))"
+            ]
 
 -- ============================================================
 -- Task 2: SICP Multiple Dwelling, first solution
