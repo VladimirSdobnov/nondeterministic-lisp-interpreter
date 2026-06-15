@@ -92,7 +92,6 @@ threeNumbersAll n =
 
                 "(search 1 1 1 (list)))"
             ]
-
 -- ============================================================
 -- Task 2: SICP Multiple Dwelling, first solution
 -- ============================================================
@@ -106,13 +105,13 @@ multipleDwellingFirst =
             "(define search ",
                 "(lambda (baker cooper fletcher miller smith) ",
 
-                    "(if (> baker 4) ",
+                    "(if (> baker 5) ",
                         "(quote fail) ",
 
                         "(if (> cooper 5) ",
                             "(search (+ baker 1) 1 1 1 1) ",
 
-                            "(if (> fletcher 4) ",
+                            "(if (> fletcher 5) ",
                                 "(search baker (+ cooper 1) 1 1 1) ",
 
                                 "(if (> miller 5) ",
@@ -124,6 +123,10 @@ multipleDwellingFirst =
                                         "(if ",
                                             "(and ",
                                                 "(distinct? (list baker cooper fletcher miller smith)) ",
+                                                "(not (= baker 5)) ",
+                                                "(not (= cooper 1)) ",
+                                                "(not (= fletcher 5)) ",
+                                                "(not (= fletcher 1)) ",
                                                 "(> miller cooper) ",
                                                 "(not (= (abs (- smith fletcher)) 1)) ",
                                                 "(not (= (abs (- fletcher cooper)) 1))) ",
@@ -137,7 +140,7 @@ multipleDwellingFirst =
 
                                             "(search baker cooper fletcher miller (+ smith 1)))))))))) ",
 
-            "(search 1 2 2 1 1))"
+            "(search 1 1 1 1 1))"
         ]
 
 -- ============================================================

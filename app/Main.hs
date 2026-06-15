@@ -87,7 +87,7 @@ measureAverage title count action = do
         avgSeconds =
             realToFrac totalTime / fromIntegral count :: Double
 
-    -- putStrLn ("Result: " ++ show firstResult)
+    putStrLn ("Result: " ++ show firstResult)
     -- putStrLn ("Result size: " ++ show (valueSize firstResult))
     -- putStrLn ("Runs: " ++ show count)
     putStrLn ("Total time: " ++ show totalTime)
@@ -162,42 +162,42 @@ noSolution =
 -- Numeric benchmark
 -- ============================================================
 
-runNumericBenchmark :: Integer -> IO ()
-runNumericBenchmark n = do
-    putStrLn ""
-    putStrLn "============================================================"
-    putStrLn ("Numeric task, n = " ++ show n)
-    putStrLn "============================================================"
+-- runNumericBenchmark :: Integer -> IO ()
+-- runNumericBenchmark n = do
+--     putStrLn ""
+--     putStrLn "============================================================"
+--     putStrLn ("Numeric task, n = " ++ show n)
+--     putStrLn "============================================================"
 
-    measureAverage
-        ("Deterministic program on deterministic evaluator: first solution, n = " ++ show n)
-        numericIterations
-        (runDeterministic (DetPrograms.threeNumbersFirst n))
+--     measureAverage
+--         ("Deterministic program on deterministic evaluator: first solution, n = " ++ show n)
+--         numericIterations
+--         (runDeterministic (DetPrograms.threeNumbersFirst n))
 
-    measureAverage
-        ("Deterministic program on deterministic evaluator: all solutions, n = " ++ show n)
-        numericIterations
-        (runDeterministic (DetPrograms.threeNumbersAll n))
+--     measureAverage
+--         ("Deterministic program on deterministic evaluator: all solutions, n = " ++ show n)
+--         numericIterations
+--         (runDeterministic (DetPrograms.threeNumbersAll n))
 
-    measureAverage
-        ("Deterministic program on nondeterministic evaluator: first solution, n = " ++ show n)
-        numericIterations
-        (runNondeterministic (DetPrograms.threeNumbersFirst n))
+--     measureAverage
+--         ("Deterministic program on nondeterministic evaluator: first solution, n = " ++ show n)
+--         numericIterations
+--         (runNondeterministic (DetPrograms.threeNumbersFirst n))
 
-    measureAverage
-        ("Deterministic program on nondeterministic evaluator: all solutions, n = " ++ show n)
-        numericIterations
-        (runNondeterministic (DetPrograms.threeNumbersAll n))
+--     measureAverage
+--         ("Deterministic program on nondeterministic evaluator: all solutions, n = " ++ show n)
+--         numericIterations
+--         (runNondeterministic (DetPrograms.threeNumbersAll n))
 
-    measureAverage
-        ("Nondeterministic program on nondeterministic evaluator: first solution, n = " ++ show n)
-        numericIterations
-        (runNondeterministic (AmbPrograms.threeNumbersFirst n))
+--     measureAverage
+--         ("Nondeterministic program on nondeterministic evaluator: first solution, n = " ++ show n)
+--         numericIterations
+--         (runNondeterministic (AmbPrograms.threeNumbersFirst n))
 
-    measureAverage
-        ("Nondeterministic program on nondeterministic evaluator: all solutions, n = " ++ show n)
-        numericIterations
-        (runNondeterministic (AmbPrograms.threeNumbersAll n))
+--     measureAverage
+--         ("Nondeterministic program on nondeterministic evaluator: all solutions, n = " ++ show n)
+--         numericIterations
+--         (runNondeterministic (AmbPrograms.threeNumbersAll n))
 
 -- ============================================================
 -- Logical benchmark
@@ -246,5 +246,5 @@ runLogicalBenchmark = do
 
 main :: IO ()
 main = do
-    mapM_ runNumericBenchmark numericSizes
+    --mapM_ runNumericBenchmark numericSizes
     runLogicalBenchmark
